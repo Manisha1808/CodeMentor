@@ -3,3 +3,4 @@ python-dotenv
 pinecone
 langchain-huggingface
 google-generativeai
+sentence-transformers
