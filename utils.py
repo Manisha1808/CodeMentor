@@ -41,19 +41,20 @@ def ask_question(query, index):
         context = " ".join(context_chunks)
 
         prompt = f"""
-        You are a Data Structures expert.
+You are a Data Structures expert.
 
-        Answer clearly using the context.
-        If not found, say "I don't know".
+First try to answer using the provided context.
 
-        Context:
-        {context}
+If the context is weak or irrelevant, use your own knowledge to answer clearly and simply.
 
-        Question:
-        {query}
+Context:
+{context}
 
-        Answer:
-        """
+Question:
+{query}
+
+Answer:
+"""
 
         response = model.generate_content(prompt)
         return response.text
