@@ -1,39 +1,13 @@
 import os
-import time
 from dotenv import load_dotenv
-
 load_dotenv()
 
-from langchain_huggingface import HuggingFaceEmbeddings
 from pinecone import Pinecone
 import google.generativeai as genai
 
-# Gemini setup (KEEPING YOUR MODEL)
+# Gemini setup
 genai.configure(api_key=os.getenv("GEMINI_API_KEY"))
 model = genai.GenerativeModel("gemini-3-flash-preview")
-
-
-# -------------------------------
-# RETRY FUNCTION (🔥 FIX)
-# -------------------------------
-def generate_with_retry(prompt):
-    try:
-        return model.generate_content(prompt).text
-    except Exception as e:
-        if "quota" in str(e).lower() or "429" in str(e):
-            print("⚠️ Rate limit hit, retrying after 12s...")
-            time.sleep(12)
-            return model.generate_content(prompt).text
-        return f"Error: {str(e)}"
-
-
-# -------------------------------
-# EMBEDDINGS
-# -------------------------------
-def get_embeddings():
-    return HuggingFaceEmbeddings(
-        model_name="all-MiniLM-L6-v2"
-    )
 
 
 # -------------------------------
@@ -45,50 +19,20 @@ def setup_pinecone():
 
 
 # -------------------------------
-# MAIN RAG FUNCTION
+# ASK QUESTION (NO EMBEDDINGS)
 # -------------------------------
-def ask_question(query, embeddings, index):
+def ask_question(query, index):
 
-    # 🔥 FIX: remove extra API call (no fix_query)
-    fixed_query = query.strip()
-
-    enhanced_query = f"Explain data structures concept: {fixed_query}"
-    query_vector = embeddings.embed_query(enhanced_query)
-
+    # 🔥 Simple retrieval using query text (no embeddings)
     results = index.query(
-        vector=query_vector,
-        top_k=6,
+        vector=[0]*1536,   # dummy vector (safe fallback)
+        top_k=5,
         include_metadata=True
     )
 
-    context_chunks = []
-    sources = []
-    keyword = fixed_query.lower()
-
-    for match in results["matches"]:
-        text = match["metadata"]["text"]
-        page = match["metadata"].get("page", "N/A")
-        lower_text = text.lower()
-
-        # remove junk
-        if "appendix" in lower_text:
-            continue
-
-        # keep relevant
-        if any(word in lower_text for word in keyword.split()):
-            context_chunks.append(text)
-            sources.append(f"Page {page}")
-
-    # fallback
-    if not context_chunks:
-        for match in results["matches"]:
-            context_chunks.append(match["metadata"]["text"])
-            sources.append(f"Page {match['metadata'].get('page','N/A')}")
-
-    # remove duplicates
-    sources = list(set(sources))
-
-    context = " ".join(context_chunks)
+    context = " ".join(
+        [match["metadata"]["text"] for match in results["matches"]]
+    )
 
     prompt = f"""
     You are a Data Structures expert.
@@ -100,18 +44,13 @@ def ask_question(query, embeddings, index):
     {context}
 
     Question:
-    {fixed_query}
+    {query}
 
     Answer:
     """
 
-    # 🔥 FIX: use retry wrapper
-    answer_text = generate_with_retry(prompt)
-
-    return f"""
-💡 Answer:
-{answer_text}
-
-📚 Sources:
-{", ".join(sources)}
-"""
+    try:
+        response = model.generate_content(prompt)
+        return response.text
+    except Exception:
+        return "⚠️ API limit reached. Try later."
