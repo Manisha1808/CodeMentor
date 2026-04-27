@@ -22,19 +22,16 @@ def setup_pinecone():
 
 
 # -------------------------------
-# ASK QUESTION (NO EMBEDDINGS)
+# ASK QUESTION
 # -------------------------------
 def ask_question(query, index):
-
     try:
-        
         results = index.query(
             vector=[0]*DIMENSION,
             top_k=5,
             include_metadata=True
         )
 
-       
         context_chunks = []
         for match in results.get("matches", []):
             text = match.get("metadata", {}).get("text", "")
