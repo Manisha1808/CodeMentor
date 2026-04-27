@@ -10,6 +10,9 @@ genai.configure(api_key=os.getenv("GEMINI_API_KEY"))
 model = genai.GenerativeModel("gemini-3-flash-preview")
 
 
+DIMENSION = 384
+
+
 # -------------------------------
 # PINECONE
 # -------------------------------
@@ -23,34 +26,41 @@ def setup_pinecone():
 # -------------------------------
 def ask_question(query, index):
 
-    # 🔥 Simple retrieval using query text (no embeddings)
-    results = index.query(
-        vector=[0]*1536,   # dummy vector (safe fallback)
-        top_k=5,
-        include_metadata=True
-    )
-
-    context = " ".join(
-        [match["metadata"]["text"] for match in results["matches"]]
-    )
-
-    prompt = f"""
-    You are a Data Structures expert.
-
-    Answer clearly using the context.
-    If not found, say "I don't know".
-
-    Context:
-    {context}
-
-    Question:
-    {query}
-
-    Answer:
-    """
-
     try:
+        
+        results = index.query(
+            vector=[0]*DIMENSION,
+            top_k=5,
+            include_metadata=True
+        )
+
+       
+        context_chunks = []
+        for match in results.get("matches", []):
+            text = match.get("metadata", {}).get("text", "")
+            if text:
+                context_chunks.append(text)
+
+        context = " ".join(context_chunks)
+
+        prompt = f"""
+        You are a Data Structures expert.
+
+        Answer clearly using the context.
+        If not found, say "I don't know".
+
+        Context:
+        {context}
+
+        Question:
+        {query}
+
+        Answer:
+        """
+
         response = model.generate_content(prompt)
         return response.text
-    except Exception:
-        return "⚠️ API limit reached. Try later."
+
+    except Exception as e:
+        print("ERROR:", e)
+        return "⚠️ Something went wrong. Try again."
