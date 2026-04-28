@@ -129,6 +129,8 @@ python app.py
 ---
 ## Output
 
+### Flask(Version)
+
 <img width="975" height="465" alt="image" src="https://github.com/user-attachments/assets/84dc292b-51af-41a4-9e6e-077da6543766" />
 
 <img width="975" height="464" alt="image" src="https://github.com/user-attachments/assets/250feaa5-7894-4401-92e2-47819e6598e1" />
@@ -136,6 +138,10 @@ python app.py
 <img width="975" height="468" alt="image" src="https://github.com/user-attachments/assets/36a64263-6514-419f-8fec-9a60e52d5247" />
 
 <img width="975" height="464" alt="image" src="https://github.com/user-attachments/assets/aeb71d66-4b47-4d5d-9fd0-0fff424eb56e" />
+
+### Gradio(Version)
+
+<img width="1192" height="634" alt="image" src="https://github.com/user-attachments/assets/edd70c82-86d3-4a60-9cb2-b20136a19d3a" />
 
 ---
 
