@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <title>Code Mentor AI</title>
+    <link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+
+<div class="container">
+
+    <!-- Sidebar -->
+    <aside class="sidebar">
+        <h2>⚡ Code Mentor</h2>
+        <ul>
+            <li class="active">Dashboard</li>
+            <li>History</li>
+            <li>Tutorials</li>
+                        <li>Settings</li>
+        </ul>
+    </aside>
+
+    <!-- Main Content -->
+    <main class="main">
+
+    <!-- DASHBOARD -->
+    <div id="dashboard-section">
+
+        <h1>Ask Your DSA Instructor</h1>
+
+        <div class="card">
+            <textarea id="question"
+                placeholder="Ask something like: What is binary search? Explain recursion with example..."></textarea>
+
+            <button onclick="askAI()">Ask Instructor</button>
+        </div>
+
+        <div class="response-card">
+            <h3>Instructor Response</h3>
+            <div id="response"></div>
+        </div>
+
+    </div>
+
+    <!-- HISTORY -->
+    <div id="history-section" style="display:none;">
+        <h2>History</h2>
+        <ul id="history-list"></ul>
+    </div>
+
+    <div id="tutorial-section" style="display:none;">
+    <h2>Tutorials</h2>
+
+    <ul id="tutorial-list">
+        <li onclick="loadTutorial('What is Array')">Array</li>
+        <li onclick="loadTutorial('What is Linked List')">Linked List</li>
+        <li onclick="loadTutorial('Explain Stack')">Stack</li>
+        <li onclick="loadTutorial('Explain Queue')">Queue</li>
+    </ul>
+</div>
+  
+<div id="settings-section" style="display:none;">
+    <h2>Settings</h2>
+
+    <button onclick="clearHistory()">Clear History</button>
+</div>
+
+</main>
+
+<script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+<script src="/static/script.js"></script>
+
+</div>
+
+<script src="/static/script.js"></script>
+</body>
+</html>
