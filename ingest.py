@@ -1,61 +1,76 @@
-from utils import get_embeddings, setup_pinecone
+import time
+from pinecone import Pinecone
+from sentence_transformers import SentenceTransformer
 from langchain_community.document_loaders import PyPDFLoader
 from langchain_text_splitters import RecursiveCharacterTextSplitter
+import os
+from dotenv import load_dotenv
 
 # -------------------------------
-# LOAD DOCUMENT
+# LOAD ENV
 # -------------------------------
-def load_document(file_path):
-    loader = PyPDFLoader(file_path)
-    return loader.load()
+load_dotenv()
 
+# -------------------------------
+# PINECONE SETUP
+# -------------------------------
+pc = Pinecone(api_key=os.getenv("PINECONE_API_KEY"))
+index = pc.Index("mentor")   # ⚠️ your existing index (384)
+
+# -------------------------------
+# EMBEDDING MODEL (HF)
+# -------------------------------
+embed_model = SentenceTransformer("all-MiniLM-L6-v2")
+
+# -------------------------------
+# LOAD PDF
+# -------------------------------
+loader = PyPDFLoader("document/dsa.pdf")
+docs = loader.load()
 
 # -------------------------------
 # CHUNKING
 # -------------------------------
-def chunk_data(documents):
-    splitter = RecursiveCharacterTextSplitter(
-        chunk_size=1000,
-        chunk_overlap=200
-    )
-    return splitter.split_documents(documents)
-
+splitter = RecursiveCharacterTextSplitter(
+    chunk_size=500,
+    chunk_overlap=50
+)
+chunks = splitter.split_documents(docs)
 
 # -------------------------------
-# STORE VECTORS (UPDATED)
+# UPSERT TO PINECONE
 # -------------------------------
-def store_vectors(chunks, embeddings, index):
+vectors = []
 
-    vectors = []
+print("🚀 Generating embeddings...")
 
-    for i, chunk in enumerate(chunks):
-        vector = embeddings.embed_query(chunk.page_content)
+for i, chunk in enumerate(chunks):
+    try:
+        text = chunk.page_content
+        embedding = embed_model.encode(text).tolist()
 
         vectors.append({
             "id": str(i),
-            "values": vector,
+            "values": embedding,
             "metadata": {
-                "text": chunk.page_content,
-                "page": chunk.metadata.get("page", "N/A")   # 🔥 IMPORTANT
+                "text": text,
+                "page": chunk.metadata.get("page", "N/A")
             }
         })
 
+        # batch upload
+        if len(vectors) == 20:
+            index.upsert(vectors)
+            vectors = []
+            print(f"✅ Uploaded batch {i}")
+
+        time.sleep(0.2)
+
+    except Exception as e:
+        print(f"⚠️ Skipped chunk {i}: {e}")
+
+# upload remaining
+if vectors:
     index.upsert(vectors)
-    print(f"✅ Stored {len(vectors)} vectors")
 
-
-# -------------------------------
-# MAIN
-# -------------------------------
-if __name__ == "__main__":
-
-    embeddings = get_embeddings()
-    index = setup_pinecone()
-
-    docs = load_document("document/dsa.pdf")
-    chunks = chunk_data(docs)
-
-    # clear old data (IMPORTANT)
-    index.delete(delete_all=True)
-
-    store_vectors(chunks, embeddings, index)
+print("✅ Data uploaded successfully!")

@@ -1,4 +1,5 @@
-flask
-python-dotenv
+gradio
 pinecone
-google-generativeai
+sentence-transformers
+google-genai
+python-dotenv
